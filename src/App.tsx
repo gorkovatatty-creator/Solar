@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+interface Moon {
+  name: string;
+  size: number;
+  orbitRadius: number;
+  duration: number; // seconds
+  color: string;
+}
+
 interface PlanetData {
   id: string;
   name: string;
@@ -15,7 +23,9 @@ interface PlanetData {
   gradient: string;
   description: string;
   hasRing?: boolean;
-  moons?: number;
+  moons?: Moon[];
+  temperature?: string;
+  gravity?: string;
 }
 
 const planets: PlanetData[] = [
@@ -33,7 +43,9 @@ const planets: PlanetData[] = [
     orbitDuration: 8,
     gradient: 'radial-gradient(circle at 30% 30%, #d4d4d4, #8a8a8a, #5a5a5a)',
     description: 'Самая маленькая и ближайшая к Солнцу планета. Температура на поверхности колеблется от -180°C до +430°C.',
-    moons: 0
+    temperature: '-180°C до +430°C',
+    gravity: '3.7 м/с²',
+    moons: []
   },
   {
     id: 'venus',
@@ -49,7 +61,9 @@ const planets: PlanetData[] = [
     orbitDuration: 14,
     gradient: 'radial-gradient(circle at 30% 30%, #f5dfa0, #e8c56d, #c4943a)',
     description: 'Самая горячая планета с плотной атмосферой из CO₂. Вращается в обратном направлении.',
-    moons: 0
+    temperature: '+462°C (средняя)',
+    gravity: '8.87 м/с²',
+    moons: []
   },
   {
     id: 'earth',
@@ -65,7 +79,11 @@ const planets: PlanetData[] = [
     orbitDuration: 20,
     gradient: 'radial-gradient(circle at 30% 30%, #7ec8e3, #4a90d9, #2d5f8a)',
     description: 'Наш дом — единственная планета с известной жизнью. 71% поверхности покрыт водой.',
-    moons: 1
+    temperature: '+15°C (средняя)',
+    gravity: '9.81 м/с²',
+    moons: [
+      { name: 'Луна', size: 4, orbitRadius: 18, duration: 4, color: '#ccc' }
+    ]
   },
   {
     id: 'mars',
@@ -81,7 +99,12 @@ const planets: PlanetData[] = [
     orbitDuration: 30,
     gradient: 'radial-gradient(circle at 30% 30%, #f0845a, #d45d3a, #8b3520)',
     description: 'Красная планета — цель будущей колонизации. Имеет самую высокую гору — Олимп (21.9 км).',
-    moons: 2
+    temperature: '-63°C (средняя)',
+    gravity: '3.72 м/с²',
+    moons: [
+      { name: 'Фобос', size: 2, orbitRadius: 12, duration: 2, color: '#aaa' },
+      { name: 'Деймос', size: 1.5, orbitRadius: 17, duration: 3.5, color: '#999' }
+    ]
   },
   {
     id: 'jupiter',
@@ -97,7 +120,14 @@ const planets: PlanetData[] = [
     orbitDuration: 50,
     gradient: 'radial-gradient(circle at 30% 30%, #f0d4a8, #d4a574, #a07040)',
     description: 'Крупнейшая планета с Большим Красным Пятном — штормом, бушующим более 350 лет.',
-    moons: 95
+    temperature: '-108°C (верхние облака)',
+    gravity: '24.79 м/с²',
+    moons: [
+      { name: 'Ио', size: 3, orbitRadius: 24, duration: 2.5, color: '#e8d44d' },
+      { name: 'Европа', size: 2.5, orbitRadius: 30, duration: 4, color: '#c8dce8' },
+      { name: 'Ганимед', size: 3.5, orbitRadius: 37, duration: 6, color: '#b8a888' },
+      { name: 'Каллисто', size: 3, orbitRadius: 44, duration: 8, color: '#888' }
+    ]
   },
   {
     id: 'saturn',
@@ -113,8 +143,14 @@ const planets: PlanetData[] = [
     orbitDuration: 75,
     gradient: 'radial-gradient(circle at 30% 30%, #f5e8b8, #e8d08a, #b89850)',
     description: 'Знаменит своими великолепными кольцами из льда и камня. Плотность меньше воды!',
+    temperature: '-139°C (верхние облака)',
+    gravity: '10.44 м/с²',
     hasRing: true,
-    moons: 146
+    moons: [
+      { name: 'Титан', size: 4, orbitRadius: 32, duration: 5, color: '#d4a050' },
+      { name: 'Энцелад', size: 2, orbitRadius: 24, duration: 3, color: '#e8e8f0' },
+      { name: 'Рея', size: 2.5, orbitRadius: 38, duration: 6.5, color: '#bbb' }
+    ]
   },
   {
     id: 'uranus',
@@ -130,7 +166,12 @@ const planets: PlanetData[] = [
     orbitDuration: 100,
     gradient: 'radial-gradient(circle at 30% 30%, #a8e8e8, #7ec8c8, #4a9090)',
     description: 'Вращается «на боку» — ось наклонена на 98°. Самая холодная планетарная атмосфера (-224°C).',
-    moons: 28
+    temperature: '-224°C (минимум)',
+    gravity: '8.87 м/с²',
+    moons: [
+      { name: 'Титания', size: 2.5, orbitRadius: 22, duration: 4, color: '#ccc' },
+      { name: 'Оберон', size: 2, orbitRadius: 28, duration: 5.5, color: '#aaa' }
+    ]
   },
   {
     id: 'neptune',
@@ -146,7 +187,11 @@ const planets: PlanetData[] = [
     orbitDuration: 130,
     gradient: 'radial-gradient(circle at 30% 30%, #6688ee, #4466cc, #223388)',
     description: 'Самая далёкая планета с сильнейшими ветрами в системе — до 2 100 км/ч.',
-    moons: 16
+    temperature: '-218°C',
+    gravity: '11.15 м/с²',
+    moons: [
+      { name: 'Тритон', size: 3, orbitRadius: 24, duration: 4, color: '#b8c8d8' }
+    ]
   }
 ];
 
@@ -165,7 +210,65 @@ function generateStars(count: number) {
   return stars;
 }
 
-const stars = generateStars(250);
+const stars = generateStars(300);
+
+function MoonOrbit({ moon }: { moon: Moon }) {
+  const moonAngleRef = useRef(Math.random() * 360);
+  const moonOrbitRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
+  const [isPlaying] = useState(true);
+
+  useEffect(() => {
+    const animateMoon = (timestamp: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      const delta = timestamp - lastTimeRef.current;
+      lastTimeRef.current = timestamp;
+
+      if (isPlaying) {
+        const angularSpeed = (360 / (moon.duration * 1000));
+        moonAngleRef.current = (moonAngleRef.current + angularSpeed * delta) % 360;
+        if (moonOrbitRef.current) {
+          moonOrbitRef.current.style.transform = `translate(-50%, -50%) rotate(${moonAngleRef.current}deg)`;
+        }
+      }
+      animRef.current = requestAnimationFrame(animateMoon);
+    };
+    animRef.current = requestAnimationFrame(animateMoon);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [moon.duration, isPlaying]);
+
+  return (
+    <div
+      className="moon-orbit-path"
+      style={{
+        width: `${moon.orbitRadius * 2}px`,
+        height: `${moon.orbitRadius * 2}px`,
+      }}
+    >
+      <div
+        ref={moonOrbitRef}
+        className="moon-orbit-container"
+        style={{
+          width: `${moon.orbitRadius * 2}px`,
+          height: `${moon.orbitRadius * 2}px`,
+        }}
+      >
+        <div
+          className="moon-body"
+          style={{
+            width: `${moon.size}px`,
+            height: `${moon.size}px`,
+            background: `radial-gradient(circle at 30% 30%, ${moon.color}, ${moon.color}88)`,
+          }}
+          title={moon.name}
+        >
+          <span className="moon-label">{moon.name}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [isPlaying, setIsPlaying] = useState(true);
@@ -176,20 +279,118 @@ function App() {
   const animationRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
   const anglesRef = useRef<number[]>(planets.map(() => Math.random() * 360));
-  const [viewScale, setViewScale] = useState(1);
+  
+  // Zoom & Pan state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [showMoonLabels, setShowMoonLabels] = useState(false);
 
-  // Auto-scale based on viewport
-  useEffect(() => {
-    const updateScale = () => {
-      const minDim = Math.min(window.innerWidth, window.innerHeight);
-      const neededSize = 900;
-      const newScale = Math.min(1, (minDim - 60) / neededSize);
-      setViewScale(newScale);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+  const MIN_ZOOM = 0.3;
+  const MAX_ZOOM = 8;
+
+  // Handle mouse wheel zoom
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom(prev => {
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev * delta));
+      return newZoom;
+    });
   }, []);
+
+  // Handle touch pinch zoom
+  const lastTouchDistRef = useRef<number>(0);
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDistRef.current = Math.sqrt(dx * dx + dy * dy);
+    } else if (e.touches.length === 1) {
+      setIsDragging(true);
+      dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      panStartRef.current = { ...pan };
+    }
+  }, [pan]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (lastTouchDistRef.current > 0) {
+        const scale = dist / lastTouchDistRef.current;
+        setZoom(prev => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev * scale)));
+      }
+      lastTouchDistRef.current = dist;
+    } else if (e.touches.length === 1 && isDragging) {
+      const dx = e.touches[0].clientX - dragStartRef.current.x;
+      const dy = e.touches[0].clientY - dragStartRef.current.y;
+      setPan({
+        x: panStartRef.current.x + dx,
+        y: panStartRef.current.y + dy
+      });
+    }
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    lastTouchDistRef.current = 0;
+  }, []);
+
+  // Mouse drag
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 0 && (e.target as HTMLElement).closest('.solar-system-area')) {
+      setIsDragging(true);
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+      panStartRef.current = { ...pan };
+    }
+  }, [pan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isDragging) {
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      setPan({
+        x: panStartRef.current.x + dx,
+        y: panStartRef.current.y + dy
+      });
+    }
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Wheel event listener
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      container.addEventListener('touchstart', handleTouchStart, { passive: false });
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchend', handleTouchEnd);
+    }
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheel);
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  // Auto-show moons and labels based on zoom level
+  const [showMoons, setShowMoons] = useState(false);
+  useEffect(() => {
+    setShowMoons(zoom >= 1.5);
+    setShowMoonLabels(zoom >= 3);
+  }, [zoom]);
 
   const handlePlanetClick = (planet: PlanetData) => {
     if (selectedPlanet?.id === planet.id) {
@@ -200,6 +401,10 @@ function App() {
       setShowInfo(true);
     }
   };
+
+  const zoomIn = () => setZoom(prev => Math.min(MAX_ZOOM, prev * 1.3));
+  const zoomOut = () => setZoom(prev => Math.max(MIN_ZOOM, prev / 1.3));
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
 
   const animate = useCallback((timestamp: number) => {
     if (!lastTimeRef.current) lastTimeRef.current = timestamp;
@@ -226,7 +431,7 @@ function App() {
   }, [animate]);
 
   useEffect(() => {
-    planets.forEach((planet, index) => {
+    planets.forEach((_, index) => {
       if (orbitRefs.current[index]) {
         orbitRefs.current[index]!.style.transform = `translate(-50%, -50%) rotate(${anglesRef.current[index]}deg)`;
       }
@@ -234,8 +439,16 @@ function App() {
   }, []);
 
   return (
-    <div className="solar-system-container">
-      {/* Stars background */}
+    <div 
+      className="solar-system-container" 
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+    >
+      {/* Stars background (fixed, not affected by zoom) */}
       {stars.map((star) => (
         <div
           key={star.id}
@@ -251,12 +464,20 @@ function App() {
         />
       ))}
 
-      {/* Scaled solar system area */}
-      <div className="solar-system-area" style={{ transform: `scale(${viewScale})` }}>
+      {/* Zoomable & pannable solar system area */}
+      <div 
+        className="solar-system-area" 
+        style={{ 
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+        }}
+      >
         {/* Sun */}
         <div 
           className="sun" 
-          onClick={() => {
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
             setSelectedPlanet({
               id: 'sun',
               name: 'Sun',
@@ -271,7 +492,7 @@ function App() {
               orbitDuration: 0,
               gradient: 'radial-gradient(circle at 30% 30%, #fff7a0, #ffcc00, #ff8800)',
               description: 'Звезда в центре нашей системы. Содержит 99.86% всей массы Солнечной системы. Возраст — около 4.6 млрд лет.',
-              moons: 0
+              moons: []
             });
             setShowInfo(true);
           }} 
@@ -297,22 +518,42 @@ function App() {
                 height: `${planet.orbitRadius * 2}px`,
               }}
             >
-              {/* Planet */}
+              {/* Planet wrapper (counter-rotates to keep upright) */}
               <div
-                className={`planet ${selectedPlanet?.id === planet.id ? 'selected' : ''}`}
+                className={`planet-wrapper ${selectedPlanet?.id === planet.id ? 'selected' : ''}`}
                 style={{
-                  width: `${planet.size}px`,
-                  height: `${planet.size}px`,
-                  background: planet.gradient,
-                  boxShadow: `0 0 ${planet.size / 2}px ${planet.color}40`,
+                  right: '0',
+                  top: '50%',
+                  transform: `translate(50%, -50%)`,
                 }}
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePlanetClick(planet);
                 }}
               >
-                {planet.hasRing && <div className="saturn-ring" />}
-                <div className="planet-label">{planet.nameRu}</div>
+                {/* Planet */}
+                <div
+                  className="planet"
+                  style={{
+                    width: `${planet.size}px`,
+                    height: `${planet.size}px`,
+                    background: planet.gradient,
+                    boxShadow: `0 0 ${planet.size / 2}px ${planet.color}40`,
+                  }}
+                >
+                  {planet.hasRing && <div className="saturn-ring" />}
+                  <div className="planet-label">{planet.nameRu}</div>
+                </div>
+
+                {/* Moons */}
+                {planet.moons && planet.moons.length > 0 && (
+                  <div className={`moons-container ${showMoons ? 'visible' : ''} ${showMoonLabels ? 'show-labels' : ''}`}>
+                    {planet.moons.map((moon, mIdx) => (
+                      <MoonOrbit key={mIdx} moon={moon} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -322,7 +563,12 @@ function App() {
       {/* Title */}
       <div className="title-panel">
         <h1>🌌 Солнечная Система</h1>
-        <p>Нажмите на планету для подробной информации</p>
+        <p>Колёсико мыши — масштаб • Перетаскивание — перемещение</p>
+      </div>
+
+      {/* Zoom indicator */}
+      <div className="zoom-indicator">
+        <span>{Math.round(zoom * 100)}%</span>
       </div>
 
       {/* Info Panel */}
@@ -362,10 +608,22 @@ function App() {
               <span className="info-label">🔄 Орбит. период</span>
               <span className="info-value">{selectedPlanet.orbitalPeriod}</span>
             </div>
-            {selectedPlanet.moons !== undefined && (
+            {selectedPlanet.temperature && (
+              <div className="info-row">
+                <span className="info-label">🌡️ Температура</span>
+                <span className="info-value">{selectedPlanet.temperature}</span>
+              </div>
+            )}
+            {selectedPlanet.gravity && (
+              <div className="info-row">
+                <span className="info-label">⚖️ Гравитация</span>
+                <span className="info-value">{selectedPlanet.gravity}</span>
+              </div>
+            )}
+            {selectedPlanet.moons && selectedPlanet.moons.length > 0 && (
               <div className="info-row">
                 <span className="info-label">🌙 Спутники</span>
-                <span className="info-value">{selectedPlanet.moons}</span>
+                <span className="info-value">{selectedPlanet.moons.map(m => m.name).join(', ')}</span>
               </div>
             )}
             <button
@@ -378,7 +636,32 @@ function App() {
         )}
       </div>
 
-      {/* Controls */}
+      {/* Zoom Controls */}
+      <div className="zoom-controls">
+        <button className="zoom-btn" onClick={zoomIn} title="Приблизить">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="11" y1="8" x2="11" y2="14"/>
+            <line x1="8" y1="11" x2="14" y2="11"/>
+          </svg>
+        </button>
+        <button className="zoom-btn" onClick={zoomOut} title="Отдалить">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="8" y1="11" x2="14" y2="11"/>
+          </svg>
+        </button>
+        <button className="zoom-btn" onClick={resetView} title="Сбросить вид">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Playback Controls */}
       <div className="controls-panel">
         <button
           className={`control-btn ${isPlaying ? 'active' : ''}`}
